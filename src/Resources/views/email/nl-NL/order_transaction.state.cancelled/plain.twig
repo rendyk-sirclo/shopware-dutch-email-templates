@@ -1,50 +1,119 @@
 {% set currencyIsoCode = order.currency.isoCode %}
-Hallo {{order.orderCustomer.salutation.letterName }} {{order.orderCustomer.firstName}} {{order.orderCustomer.lastName}},
+{% if order.orderCustomer.salutation %}
+	{{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}
+{% endif %}
+{{ order.orderCustomer.firstName }}
+{{ order.orderCustomer.lastName }},
 
-We hebben je bestelling ontvangen op {{ order.orderDateTime|date }}.
+We have received your order on
+{{ order.orderDateTime|format_datetime('medium', 'short', locale='en-GB') }}.
 
-Ordernummer: {{ order.orderNumber }}.
+Order number:
+{{ order.orderNumber }}.
 
-Je hebt je betaling met {{ order.transactions.first.paymentMethod.name }} nog niet voltooid. Je kunt het betalingsproces hervatten door de volgende URL te gebruiken: {{ rawUrl('frontend.account.order.single.page', {'deepLinkCode': order.deepLinkCode}, salesChannel.domains|first.url) }}
+You have not completed your payment with
+{{ order.transactions.first.paymentMethod.translated.name }}
+yet. You can resume the payment process by using the following URL:
+{{ rawUrl('frontend.account.order.single.page', { 'deepLinkCode': order.deepLinkCode }, salesChannel.domains|first.url) }}
 
-Informatie over je bestelling:
+Information on your order:
 
-#   Art.			Beschrijving			Aantal			Prijs			Totaal
+Pos.   Prod. No.			Description			Quantities			Price			Total
 {% for lineItem in order.lineItems %}
-    {{ loop.index }}      {% if lineItem.payload.productNumber is defined %}{{ lineItem.payload.productNumber|u.wordwrap(80) }}{% endif %}				{{ lineItem.label|u.wordwrap(80) }}{% if lineItem.payload.options is defined and lineItem.payload.options|length >= 1 %}, {% for option in lineItem.payload.options %}{{ option.group }}: {{ option.option }}{% if lineItem.payload.options|last != option %}{{ " | " }}{% endif %}{% endfor %}{% endif %}				{{ lineItem.quantity }}			{{ lineItem.unitPrice|currency(currencyIsoCode) }}			{{ lineItem.totalPrice|currency(currencyIsoCode) }}
+	{{ loop.index }}
+	{% if lineItem.payload.productNumber is defined %}
+		{{ lineItem.payload.productNumber|u.wordwrap(80) }}
+	{% endif %}
+	{{ lineItem.label|u.wordwrap(80) }}
+	{% if lineItem.payload.options is defined and lineItem.payload.options|length >= 1 %},
+		{% for option in lineItem.payload.options %}
+			{{ option.group }}:
+			{{ option.option }}
+			{% if lineItem.payload.options|last != option %}
+				{{ " | " }}
+			{% endif %}
+		{% endfor %}
+	{% endif %}
+	{% if lineItem.payload.features is defined and lineItem.payload.features|length >= 1 %}
+		{% set referencePriceFeatures = lineItem.payload.features|filter(feature => feature.type == 'referencePrice') %}
+		{% if referencePriceFeatures|length >= 1 %}
+			{% set referencePriceFeature = referencePriceFeatures|first %},
+			{{ referencePriceFeature.value.purchaseUnit }}
+			{{ referencePriceFeature.value.unitName }}({{ referencePriceFeature.value.price|currency(currencyIsoCode) }}* /
+			{{ referencePriceFeature.value.referenceUnit }}
+			{{ referencePriceFeature.value.unitName }})
+		{% endif %}
+	{% endif %}
+	{{ lineItem.quantity }}
+	{{ lineItem.unitPrice|currency(currencyIsoCode) }}
+	{{ lineItem.totalPrice|currency(currencyIsoCode) }}
 {% endfor %}
 
 {% set delivery = order.deliveries.first %}
 
-Verzendkosten: {{order.deliveries.first.shippingCosts.totalPrice|currency(currencyIsoCode) }}
-Subtotaal: {{ order.amountNet|currency(currencyIsoCode) }}
-    {% for calculatedTax in order.price.calculatedTaxes %}
-        {% if order.taxStatus is same as('net') %}plus{% else %}inclusief{% endif %} {{ calculatedTax.taxRate }}% BTW. {{ calculatedTax.tax|currency(currencyIsoCode) }}
-    {% endfor %}
-Totaal: {{ order.amountTotal|currency(currencyIsoCode) }}
-
-Gekozen verzendmethode: {{ delivery.shippingMethod.name }}
-{{ delivery.shippingMethod.description }}
-
-{% set billingAddress = order.addresses.get(order.billingAddressId) %}
-Factuuradres:
-{{ billingAddress.company }}
-{{ billingAddress.firstName }} {{ billingAddress.lastName }}
-{{ billingAddress.street }}
-{{ billingAddress.zipcode }} {{ billingAddress.city }}
-{{ billingAddress.country.name }}
-
-Verzendadres:
-{{ delivery.shippingOrderAddress.company }}
-{{ delivery.shippingOrderAddress.firstName }} {{ delivery.shippingOrderAddress.lastName }}
-{{ delivery.shippingOrderAddress.street }}
-{{ delivery.shippingOrderAddress.zipcode}} {{ delivery.shippingOrderAddress.city }}
-{{ delivery.shippingOrderAddress.country.name }}
-
-{% if billingAddress.vatId %}
-    Je BTW-nummer: {{ billingAddress.vatId }}
-    In het geval van een succesvolle bestelling en als je gevestigd bent in een van de EU-landen (uitgezonderd Nederland), ontvangt je je goederen vrijgesteld van omzetbelasting.
+{% set displayRounded = order.totalRounding.interval != 0.01 or order.totalRounding.decimals != order.itemRounding.decimals %}
+{% set decimals = order.totalRounding.decimals %}
+{% set total = order.price.totalPrice %}
+{% if displayRounded %}
+	{% set total = order.price.rawTotal %}
+	{% set decimals = order.itemRounding.decimals %}
 {% endif %}
 
-Je kunt op elk moment de huidige status van je bestelling bekijken op onze website onder "Mijn account" - "Mijn bestellingen": {{ rawUrl('frontend.account.order.single.page', { 'deepLinkCode': order.deepLinkCode}, salesChannel.domains|first.url) }}
-Mocht je nog vragen hebben, neem dan gerust contact met ons op.
+{% for shippingCost in order.deliveries %}
+	Shipping costs:
+	{{ shippingCost.shippingCosts.totalPrice|currency(currencyIsoCode) }}<br>
+{% endfor %}
+Net total:
+{{ order.amountNet|currency(currencyIsoCode) }}
+{% for calculatedTax in order.price.calculatedTaxes %}
+	{% if order.taxStatus is same as('net') %}plus{% else %}including
+	{% endif %}
+	{{ calculatedTax.taxRate }}% VAT.
+	{{ calculatedTax.tax|currency(currencyIsoCode) }}
+{% endfor %}
+Total gross:
+{{ total|currency(currencyIsoCode,decimals=decimals) }}
+{% if displayRounded %}
+	Rounded total gross:
+	{{ order.price.totalPrice|currency(currencyIsoCode,decimals=order.totalRounding.decimals) }}
+{% endif %}
+
+Selected payment type:
+{{ order.transactions.first.paymentMethod.translated.name }}
+{{ order.transactions.first.paymentMethod.translated.description }}
+
+Selected shipping type:
+{{ delivery.shippingMethod.translated.name }}
+{{ delivery.shippingMethod.translated.description }}
+
+{% set billingAddress = order.addresses.get(order.billingAddressId) %}
+Billing address:
+{{ billingAddress.company }}
+{{ billingAddress.firstName }}
+{{ billingAddress.lastName }}
+{{ billingAddress.street }}
+{{ billingAddress.zipcode }}
+{{ billingAddress.city }}
+{{ billingAddress.country.translated.name }}
+
+Shipping address:
+{{ delivery.shippingOrderAddress.company }}
+{{ delivery.shippingOrderAddress.firstName }}
+{{ delivery.shippingOrderAddress.lastName }}
+{{ delivery.shippingOrderAddress.street }}
+{{ delivery.shippingOrderAddress.zipcode}}
+{{ delivery.shippingOrderAddress.city }}
+{{ delivery.shippingOrderAddress.country.translated.name }}
+
+{% if order.orderCustomer.vatIds %}
+	Your VAT-ID:
+	{{ order.orderCustomer.vatIds|first }}
+	In case of a successful order and if you are based in one of the EU countries, you will receive your goods exempt from turnover tax.
+{% endif %}
+
+You can check the current status of your order on our website under "My account" - "My orders" anytime:
+{{ rawUrl('frontend.account.order.single.page', { 'deepLinkCode': order.deepLinkCode }, salesChannel.domains|first.url) }}
+If you have any questions, do not hesitate to contact us.
+
+However, in case you have purchased without a registration or a customer account, you do not have this option.
+Footer

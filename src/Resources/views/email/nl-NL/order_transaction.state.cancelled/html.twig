@@ -1,96 +1,258 @@
-<div style="font-family:arial; font-size:12px;">
+<div style="font-family:Arial, Helvetica, sans-serif; font-size:12px;">
 
-    {% set currencyIsoCode = order.currency.isoCode %}
-    Hallo {{order.orderCustomer.salutation.letterName }} {{order.orderCustomer.firstName}} {{order.orderCustomer.lastName}},<br>
-    <br>
-    We hebben je bestelling ontvangen op {{ order.orderDateTime|date }}.<br>
-    <br>
-    Ordernummer: {{ order.orderNumber }}.<br>
-    <br>
-    Je hebt je betaling met {{ order.transactions.first.paymentMethod.name }} nog niet voltooid. Je kunt het betalingsproces hervatten door de volgende URL te gebruiken: {{ rawUrl('frontend.account.order.single.page', { 'deepLinkCode': order.deepLinkCode}, salesChannel.domains|first.url) }}<br>
-    <br>
-    <strong>Informatie over je bestelling:</strong><br>
-    <br>
+	{% set currencyIsoCode = order.currency.isoCode %}
+	<div style="font-size:18px;font-weight:700;margin-bottom:18px;">
+		{% if order.orderCustomer.salutation %}
+			{{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}
+		{% endif %}
+		{{ order.orderCustomer.firstName }}
+		{{ order.orderCustomer.lastName }},
+	</div>
 
-    <table width="80%" border="0" style="font-family:Arial, Helvetica, sans-serif; font-size:12px;">
-        <tr>
-            <td bgcolor="#F7F7F2" style="border-bottom:1px solid #cccccc;"><strong>#</strong></td>
-            <td bgcolor="#F7F7F2" style="border-bottom:1px solid #cccccc;"><strong>Beschrijving</strong></td>
-            <td bgcolor="#F7F7F2" style="border-bottom:1px solid #cccccc;"><strong>Aantal</strong></td>
-            <td bgcolor="#F7F7F2" style="border-bottom:1px solid #cccccc;"><strong>Prijs</strong></td>
-            <td bgcolor="#F7F7F2" style="border-bottom:1px solid #cccccc;"><strong>Totaal</strong></td>
-        </tr>
+	<div style="margin-bottom:14px;">
+		Your payment has been successfully cancelled for order
+		<span style="color: #0054EB; font-weight:600;">{{ order.orderNumber }}</span>, from
+		{{ order.orderDateTime|format_datetime('medium', 'short', locale='en-GB') }}.
+		<div>
+			However, you can resume the payment process by using the following URL:
+			{{ rawUrl('frontend.account.order.single.page', { 'deepLinkCode': order.deepLinkCode }, salesChannel.domains|first.url) }}
+		</div>
+		<div>
+			As soon as your payment has been made, you will receive a separate notification and your order will be processed.
+		</div>
+	</div>
 
-        {% for lineItem in order.lineItems %}
-            <tr>
-                <td style="border-bottom:1px solid #cccccc;">{{ loop.index }} </td>
-                <td style="border-bottom:1px solid #cccccc;">
-                    {{ lineItem.label|u.wordwrap(80) }}<br>
-                    {% if lineItem.payload.options is defined and lineItem.payload.options|length >= 1 %}
-                        {% for option in lineItem.payload.options %}
-                            {{ option.group }}: {{ option.option }}
-                            {% if lineItem.payload.options|last != option %}
-                                {{ " | " }}
-                            {% endif %}
-                        {% endfor %}
-                        <br/>
-                    {% endif %}
-                    {% if lineItem.payload.productNumber is defined %}Artikelnummer: {{ lineItem.payload.productNumber|u.wordwrap(80) }}{% endif %}
-                </td>
-                <td style="border-bottom:1px solid #cccccc;">{{ lineItem.quantity }}</td>
-                <td style="border-bottom:1px solid #cccccc;">{{ lineItem.unitPrice|currency(currencyIsoCode) }}</td>
-                <td style="border-bottom:1px solid #cccccc;">{{ lineItem.totalPrice|currency(currencyIsoCode) }}</td>
-            </tr>
-        {% endfor %}
-    </table>
+	<div style="font-weight:700; margin-bottom:10px;">
+		Information on your order:
+	</div>
 
-    {% set delivery = order.deliveries.first %}
-    <p>
-        <br>
-        <br>
-        Verzendkosten: {{order.deliveries.first.shippingCosts.totalPrice|currency(currencyIsoCode) }}<br>
+	<table border="0" style="font-family:Arial, Helvetica, sans-serif; font-size:12px; width: 100%;">
+		<thead>
+			<tr style="text-align:left;">
+				<th style="border-bottom:1px solid #cccccc; padding:12px 15px;">
+					<strong>SKU</strong>
+				</th>
+				<th style="border-bottom:1px solid #cccccc; padding:12px 15px;">
+					<strong>Description</strong>
+				</th>
+				<th style="border-bottom:1px solid #cccccc; padding:12px 15px;">
+					<strong>Quantities</strong>
+				</th>
+				<th style="border-bottom:1px solid #cccccc; padding:12px 15px;">
+					<strong>Price</strong>
+				</th>
+				<th style="border-bottom:1px solid #cccccc; padding:12px 15px;">
+					<strong>Total</strong>
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for lineItem in order.nestedLineItems %}
+				{% set nestingLevel = 0 %}
+				{% set nestedItem = lineItem %}
+				{% block lineItem %}
+					<tr>
+						<td style="padding:12px 15px;">
+							{% if nestedItem.payload.productNumber is defined %}
+								{{ nestedItem.payload.productNumber|u.wordwrap(80) }}
+							{% endif %}
+						</td>
+						<td style="padding:12px 15px;">
+							{% if nestingLevel > 0 %}
+								{% for i in 1..nestingLevel %}
+									<span style="position: relative;">
+										<span style="display: inline-block; position: absolute; width: 6px; height: 20px; top: 0; border-left:  2px solid rgba(0, 0, 0, 0.15); margin-left: {{ i * 10 }}px;"></span>
+									</span>
+								{% endfor %}
+							{% endif %}
 
-        Subtotaal: {{ order.amountNet|currency(currencyIsoCode) }}<br>
-        {% for calculatedTax in order.price.calculatedTaxes %}
-            {% if order.taxStatus is same as('net') %}plus{% else %}inclusief{% endif %} {{ calculatedTax.taxRate }}% BTW. {{ calculatedTax.tax|currency(currencyIsoCode) }}<br>
-        {% endfor %}
-        <strong>Totaal: {{ order.amountTotal|currency(currencyIsoCode) }}</strong><br>
+							<div {% if nestingLevel > 0 %} style="padding-left: {{ (nestingLevel + 1) * 10 }}px" {% endif %}>
+								{{ nestedItem.label|u.wordwrap(80) }}
+							</div>
 
-        <br>
+							{% if nestedItem.payload.options is defined and nestedItem.payload.options|length >= 1 %}
+								<div>
+									{% for option in nestedItem.payload.options %}
+										{{ option.group }}:
+										{{ option.option }}
+										{% if nestedItem.payload.options|last != option %}
+											{{ " | " }}
+										{% endif %}
+									{% endfor %}
+								</div>
+							{% endif %}
 
-        <strong>Gekozen betaalmethode:</strong> {{ order.transactions.first.paymentMethod.name }}<br>
-        {{ order.transactions.first.paymentMethod.description }}<br>
-        <br>
+							{% if nestedItem.payload.features is defined and nestedItem.payload.features|length >= 1 %}
+								{% set referencePriceFeatures = nestedItem.payload.features|filter(feature => feature.type == 'referencePrice') %}
+								{% if referencePriceFeatures|length >= 1 %}
+									{% set referencePriceFeature = referencePriceFeatures|first %}
+									<div>
+										{{ referencePriceFeature.value.purchaseUnit }}
+										{{ referencePriceFeature.value.unitName }}
+										({{ referencePriceFeature.value.price|currency(currencyIsoCode) }}* /
+										{{ referencePriceFeature.value.referenceUnit }}
+										{{ referencePriceFeature.value.unitName }})
+									</div>
+								{% endif %}
+							{% endif %}
+						</td>
+						<td style="text-align: left; padding:12px 15px;">
+							{{ nestedItem.quantity }}
+						</td>
+						<td style="padding:12px 15px;">
+							{{ nestedItem.unitPrice|currency(currencyIsoCode) }}
+						</td>
+						<td style="padding:12px 15px;">
+							{{ nestedItem.totalPrice|currency(currencyIsoCode) }}
+						</td>
+					</tr>
 
-        <strong>Gekozen verzendmethode:</strong> {{ delivery.shippingMethod.name }}<br>
-        {{ delivery.shippingMethod.description }}<br>
-        <br>
+					{% if nestedItem.children.count > 0 %}
+						{% set nestingLevel = nestingLevel + 1 %}
+						{% for lineItem in nestedItem.children %}
+							{% set nestedItem = lineItem %}
+							{{ block('lineItem') }}
+						{% endfor %}
+					{% endif %}
+				{% endblock %}
+			{% endfor %}
+		</tbody>
+	</table>
 
-        {% set billingAddress = order.addresses.get(order.billingAddressId) %}
-        <strong>Factuuradres:</strong><br>
-        {{ billingAddress.company }}<br>
-        {{ billingAddress.firstName }} {{ billingAddress.lastName }}<br>
-        {{ billingAddress.street }} <br>
-        {{ billingAddress.zipcode }} {{ billingAddress.city }}<br>
-        {{ billingAddress.country.name }}<br>
-        <br>
+	{% set delivery = order.deliveries.first %}
 
-        <strong>Verzendadres:</strong><br>
-        {{ delivery.shippingOrderAddress.company }}<br>
-        {{ delivery.shippingOrderAddress.firstName }} {{ delivery.shippingOrderAddress.lastName }}<br>
-        {{ delivery.shippingOrderAddress.street }} <br>
-        {{ delivery.shippingOrderAddress.zipcode}} {{ delivery.shippingOrderAddress.city }}<br>
-        {{ delivery.shippingOrderAddress.country.name }}<br>
-        <br>
-        {% if billingAddress.vatId %}
-            Je BTW-nummer: {{ billingAddress.vatId }}
-            In het geval van een succesvolle bestelling en als je gevestigd bent in een van de EU-landen (uitgezonderd Nederland), ontvangt je je goederen vrijgesteld van omzetbelasting.<br>
-        {% endif %}
-        <br/>
-        Je kunt op elk moment de huidige status van je bestelling bekijken op onze website onder "Mijn account" - "Mijn bestellingen": {{ rawUrl('frontend.account.order.single.page', { 'deepLinkCode': order.deepLinkCode}, salesChannel.domains|first.url) }}
-        </br>
-        Mocht je nog vragen hebben, neem dan gerust contact met ons op.
+	{% set displayRounded = order.totalRounding.interval != 0.01 or order.totalRounding.decimals != order.itemRounding.decimals %}
+	{% set decimals = order.totalRounding.decimals %}
+	{% set total = order.price.totalPrice %}
+	{% if displayRounded %}
+		{% set total = order.price.rawTotal %}
+		{% set decimals = order.itemRounding.decimals %}
+	{% endif %}
 
-    </p>
-    <br>
+	<div style="margin-top: 24px;">
+		<div style="display: flex;">
+			<span style="width:140px;">
+				Shipping costs
+			</span>
+			<span>
+				{{ order.deliveries.first.shippingCosts.totalPrice|currency(currencyIsoCode) }}
+			</span>
+		</div>
+		<div style="display: flex;">
+			<span style="width: 140px">
+				Net total
+			</span>
+			<span>
+				{{ order.amountNet|currency(currencyIsoCode) }}
+			</span>
+		</div>
+		{% for calculatedTax in order.price.calculatedTaxes %}
+			<div style="display: flex;">
+				<span style="width: 140px;">
+					{% if order.taxStatus is same as('net') %}plus{% else %}including
+					{% endif %}
+					{{ calculatedTax.taxRate }}% VAT.
+				</span>
+				<span>
+					{{ calculatedTax.tax|currency(currencyIsoCode) }}
+				</span>
+			</div>
+		{% endfor %}
+
+		<div style="display: flex;">
+			<span style="width: 140px;">
+				{% if not displayRounded %}
+					<strong>
+					{% endif %}
+					Total gross
+					{% if not displayRounded %}
+					</strong>
+				{% endif %}
+			</span>
+			<span>
+				{% if not displayRounded %}
+					<strong>
+					{% endif %}
+					{{ total|currency(currencyIsoCode,decimals=decimals) }}
+					{% if not displayRounded %}
+					</strong>
+				{% endif %}
+			</span>
+		</div>
+
+		{% if displayRounded %}
+			<div style="display: flex;">
+				<span style="width: 140px;">
+					<strong>Rounded total gross</strong>
+				</span>
+				<span>
+					<strong>
+						{{ order.price.totalPrice|currency(currencyIsoCode,decimals=order.totalRounding.decimals) }}
+					</strong>
+				</span>
+			</div>
+		{% endif %}
+	</div>
+
+	<div style="margin-top:18px">
+		<div style="margin-bottom:28px">
+			<div>
+				<strong>Selected payment type:</strong>
+				{{ order.transactions.first.paymentMethod.translated.name }}
+			</div>
+			<div>
+				{{ order.transactions.first.paymentMethod.translated.description }}
+			</div>
+		</div>
+
+		<div style="margin-bottom:28px">
+			<div>
+				<strong>Selected shipping type:</strong>
+				{{ delivery.shippingMethod.translated.name }}
+			</div>
+			<div>
+				{{ delivery.shippingMethod.translated.description }}
+			</div>
+		</div>
+
+		<div style="margin-bottom:28px">
+			{% set billingAddress = order.addresses.get(order.billingAddressId) %}
+			<div style="font-weight:700;">
+				Billing address:
+			</div>
+			<div>{{ billingAddress.company }}</div>
+			<div>{{ billingAddress.firstName }}
+				{{ billingAddress.lastName }}</div>
+			<div>{{ billingAddress.street }}</div>
+			<div>{{ billingAddress.zipcode }}
+				{{ billingAddress.city }}</div>
+			<div>{{ billingAddress.country.translated.name }}</div>
+		</div>
+
+		<div>
+			<div style="font-weight:700;">
+				Shipping address:
+			</div>
+			<div>{{ delivery.shippingOrderAddress.company }}</div>
+			<div>{{ delivery.shippingOrderAddress.firstName }}
+				{{ delivery.shippingOrderAddress.lastName }}</div>
+			<div>{{ delivery.shippingOrderAddress.street }}</div>
+			<div>{{ delivery.shippingOrderAddress.zipcode}}
+				{{ delivery.shippingOrderAddress.city }}</div>
+			<div>{{ delivery.shippingOrderAddress.country.translated.name }}</div>
+		</div>
+
+		{% if order.orderCustomer.vatIds %}
+			<div style="margin-top:14px;">
+				Your VAT-ID:
+				{{ order.orderCustomer.vatIds|first }}
+				In case of a successful order and if you are based in one of the EU countries, you will receive your goods exempt from turnover tax.
+			</div>
+		{% endif %}
+
+		<div style="margin-top:14px;">
+			You can check the current status of your order on our website under "My account" - "My orders" anytime:
+			{{ rawUrl('frontend.account.order.single.page', { 'deepLinkCode': order.deepLinkCode }, salesChannel.domains|first.url) }}
+		</div>
+	</div>
 </div>
