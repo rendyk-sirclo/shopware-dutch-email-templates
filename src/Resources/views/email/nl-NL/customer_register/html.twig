@@ -1,9 +1,10 @@
 <div style="font-family:arial; font-size:12px;">
+    <div style="font-weight:700;text-align:center;font-size:24px;margin-bottom:18px;">
+        Welcome to {{ config('core.basicInformation.shopName')|raw }}, {{ customer.firstName }}!
+    </div>
     <p>
-        Hallo {{ customer.salutation.translated.letterName }} {{ customer.firstName }} {{ customer.lastName }},<br/>
-        <br/>
-        Bedankt voor je registratie bij onze webshop.<br/>
-        Je kunt nu inloggen via het e-mailadres <strong>{{ customer.email }}</strong> and het door jou gekozen wachtwoord.<br/>
-        Je kunt het wachtwoord op elk moment wijzigen.
+        Thank you for your signing up with our Shop. We're so glad you joined us.<br/>
+        You will gain access via the email address <strong>{{ customer.email }}</strong> and the password you have chosen.<br/>
+        You can change your password anytime.
     </p>
 </div>

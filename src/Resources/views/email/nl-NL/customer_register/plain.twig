@@ -1,5 +1,5 @@
-Hallo {{ customer.salutation.translated.letterName }} {{customer.firstName}} {{ customer.lastName }},
+Welcome to {{ config('core.basicInformation.shopName')|raw }}, {{ customer.firstName }}!
 
-Bedankt voor je registratie bij onze webshop.
-Je kunt nu inloggen via het e-mailadres {{ customer.email }} and het door jou gekozen wachtwoord.
-Je kunt het wachtwoord op elk moment wijzigen.
+Thank you for your signing up with our Shop. We're so glad you joined us.
+You will gain access via the email address {{ customer.email }} and the password you have chosen.
+You can change your password anytime.
