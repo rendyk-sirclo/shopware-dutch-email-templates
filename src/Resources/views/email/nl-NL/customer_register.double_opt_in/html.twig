@@ -1,12 +1,12 @@
-<div style="font-family:arial; font-size:12px;">
+<div style="font-family:Arial, Helvetica, sans-serif; font-size:12px;">
     <p>
-        Hallo {{ customer.salutation.translated.displayName }} {{ customer.lastName }},<br/>
+        Hello {{ customer.salutation.translated.displayName }} {{ customer.lastName }},
+        <br/><br/>
+        Thank you for your signing up with {{ config('core.basicInformation.shopName')|raw }}.<br/>
+        Please confirm the sign-up via the following link:<br/>
         <br/>
-        Bedankt voor het registreren bij {{ salesChannel.translated.name }}.<br/>
-        Bevestig de registratie via de volgende link:<br/>
-        <br/>
-        <a href="{{ confirmUrl }}">Registratie voltooien</a><br/>
-        <br/>
-        Door deze bevestiging ga je er ook mee akkoord dat we je verdere e-mails kunnen sturen als onderdeel van de uitvoering van de overeenkomst.
+        <a href="{{ confirmUrl }}">Completing sign-up</a>
+        <br/><br/>
+        By this confirmation, you also agree that we may send you further emails as part of the fulfillment of the contract.
     </p>
 </div>
