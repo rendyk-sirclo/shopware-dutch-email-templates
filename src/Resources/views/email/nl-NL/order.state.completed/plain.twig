@@ -1,4 +1,4 @@
-{{ order.orderCustomer.salutation.translated.letterName }} {{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }}
+{{ order.orderCustomer.salutation.translated.letterName }} {{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},
 
 The status of your order at {{ config('core.basicInformation.shopName')|raw }} (Number: {{ order.orderNumber }}) on {{ order.orderDateTime|format_datetime('medium', 'short', locale='en-GB') }}  has changed.
 The new status is as follows: {{ order.stateMachineState.translated.name }}.
