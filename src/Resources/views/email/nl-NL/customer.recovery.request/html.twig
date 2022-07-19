@@ -1,16 +1,12 @@
-<div style="font-family:arial; font-size:12px;">
+<div style="font-family:Arial, Helvetica, sans-serif; font-size:12px;">
     <p>
-        Hallo {{ customerRecovery.customer.firstName }} {{ customerRecovery.customer.lastName }},<br/>
-        <br/>
-        Er is een nieuw wachtwoord aangevraagd voor je {{ shopName }} account.
-        Klik op de volgende link om het wachtwoord te resetten:<br/>
-        <br/>
-        <a href="{{ resetUrl }}">{{ resetUrl }}</a><br/>
-        <br/>
-        Deze link is geldig voor de komende 2 uur.
-        Als je je wachtwoord niet wilt resetten, negeer deze e-mail en er zullen geen wijzigingen worden aangebracht.<br/>
-        <br/>
-        Met vriendelijke groet,
-        Het {{ shopName }} team
+        Hello {{ customerRecovery.customer.firstName }} {{ customerRecovery.customer.lastName }},
+        <br/><br/>
+        Follow this link to reset your account password at {{ config('core.basicInformation.shopName')|raw }}:
+        <br/><br/>
+        <a href="{{ resetUrl }}">{{ resetUrl }}</a>
+        <br/><br/>
+        This link is valid for the next 2 hours.
+        If you didn't request password reset, you can ignore this email and no changes will be made.
     </p>
 </div>
