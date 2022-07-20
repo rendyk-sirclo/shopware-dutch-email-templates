@@ -1,12 +1,16 @@
-<div style="font-family:arial; font-size:12px;">
+<div style="font-family:Arial, Helvetica, sans-serif; font-size:12px;">
     <p>
-	Het onderstaande bericht heb je ontvangen via het contactformulier.<br/>
+        The following Message was sent to you via the contact form.
+        <br/><br/>
+        Contact name: {{ contactFormData.firstName }} {{ contactFormData.lastName }}
         <br/>
-        Naam: {{ contactFormData.firstName }} {{ contactFormData.lastName }}
-        E-mailadres: {{ contactFormData.email }}<br/>
-        Telefoonnummer: {{ contactFormData.phone }}<br/><br/>
-        Onderwerp: {{ contactFormData.subject }}<br/>
+        Contact email address: {{ contactFormData.email }}
         <br/>
-        Bericht: {{ contactFormData.comment }}<br/>
+        Phone: {{ contactFormData.phone }}
+        <br/><br/>
+        Subject: {{ contactFormData.subject }}
+        <br/><br/>
+        Message:<br/>
+        {{ contactFormData.comment|nl2br }}<br/>
     </p>
 </div>
