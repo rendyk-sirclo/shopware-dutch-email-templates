@@ -1,4 +1,4 @@
-<div style="font-family:arial; font-size:12px;">
+<div style="font-family:Arial, Helvetica, sans-serif; font-size:12px;">
     <p>
         {% if order.orderCustomer.salutation %}
             {{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}
@@ -6,7 +6,7 @@
         {{ order.orderCustomer.firstName }}
         {{ order.orderCustomer.lastName }},
         <br/><br/>
-        the status of your order at {{ salesChannel.translated.name }} (Number: {{ order.orderNumber }}) on {{ order.orderDateTime|format_datetime('medium', 'short', locale='en-GB') }} has changed.<br/>
+        The status of your order at {{ config('core.basicInformation.shopName')|raw }} (Number: {{ order.orderNumber }}) on {{ order.orderDateTime|format_datetime('medium', 'short', locale='en-GB') }} has changed.<br/>
         <strong>
             The new status is as follows: {{ order.transactions.first.stateMachineState.translated.name }}.
         </strong>
