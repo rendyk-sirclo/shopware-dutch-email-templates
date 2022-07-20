@@ -1,12 +1,47 @@
-<div style="font-family:arial; font-size:12px;">
-    <br/>
-    Hallo {{order.orderCustomer.salutation.letterName }} {{order.orderCustomer.firstName}} {{order.orderCustomer.lastName}},<br/>
-    <br/>
-    De status van je bezorging van {{ salesChannel.name }} (Nummer: {{order.orderNumber}}) op {{ order.orderDateTime|date }} is veranderd.<br/>
-    <strong>De nieuwe status is als volgt: {{order.deliveries.first.stateMachineState.name}}.</strong><br/>
-    <br/>
-    Je kunt de actuele status van je bestelling op elk moment bekijken op onze website onder "Mijn account" - "Mijn bestellingen": {{ rawUrl('frontend.account.order.single.page', { 'deepLinkCode': order.deepLinkCode}, salesChannel.domains|first.url) }}
-    </br>
-    Als je echter gekocht hebt zonder registratie of een klantenaccount, heb je deze optie niet.
-    </p>
+<div style="font-family:Arial, Helvetica, sans-serif; font-size:12px;">
+    <div style="font-size:18px;font-weight:700;margin-bottom:18px;">
+		{% if order.orderCustomer.salutation %}
+            {{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}
+        {% endif %}
+		{{ order.orderCustomer.firstName }}
+		{{ order.orderCustomer.lastName }},
+	</div>
+
+    <div style="margin-bottom:14px;">
+        The status of your delivery at {{ config('core.basicInformation.shopName')|raw }} (Number: {{ order.orderNumber }}) on {{ order.orderDateTime|format_datetime('medium', 'short', locale='en-GB') }} has changed.<br/>
+        <strong>
+            The new status is as follows: {{ order.deliveries.first.stateMachineState.translated.name }}.
+        </strong>
+    </div>
+    
+    <div style="margin-bottom:14px;">
+		<div>
+			<span>
+				<strong>Order Number:</strong>
+				{{ order.orderNumber }}
+			</span>
+		</div>
+		<div>
+			<span>
+				<strong>Date Order:</strong>
+				{{ order.orderDateTime|format_datetime('medium', 'short', locale='en-GB') }}
+			</span>
+		</div>
+		{% if order.customFields.logistix_data %}
+			<div>
+				<strong>Shipping method:</strong>
+				{{ order.deliveries.first.shippingMethod.translated.name }}
+				({{ order.customFields.logistix_data.shippingMethodName }})
+			</div>
+		{% endif %}
+	</div>
+
+    <div>
+		You can check the current status of your order on our website under "My account" - "My orders" anytime:
+		{{ rawUrl('frontend.account.order.single.page', { 'deepLinkCode': order.deepLinkCode }, salesChannel.domains|first.url) }}
+	</div>
+
+    <div>
+        However, in case you have purchased without a registration or a customer account, you do not have this option.
+    </div>
 </div>

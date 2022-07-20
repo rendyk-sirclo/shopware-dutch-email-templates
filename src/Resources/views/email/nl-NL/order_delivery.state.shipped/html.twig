@@ -1,6 +1,8 @@
 <div style="font-family:Arial, Helvetica, sans-serif; font-size:12px;">
 	<div style="font-size:18px;font-weight:700;margin-bottom:18px;">
-		{{ order.orderCustomer.salutation.translated.letterName }}
+		{% if order.orderCustomer.salutation %}
+            {{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}
+        {% endif %}
 		{{ order.orderCustomer.firstName }}
 		{{ order.orderCustomer.lastName }},
 	</div>
@@ -22,15 +24,20 @@
 				{{ order.orderDateTime|format_datetime('medium', 'short', locale='en-GB') }}
 			</span>
 		</div>
-		<div>
-			<strong>Tracking no:</strong>
-			{% for delivery in order.deliveries %}
-				{% for trackingCode in delivery.trackingCodes %}
-					<a href="{{salesChannel.domains|first.url}}account/shipping/tracking?id={{ trackingCode }}">
-						{{ trackingCode }}</a>
-				{% endfor %}
-			{% endfor %}
-		</div>
+
+		{% if order.deliveries.first.trackingCodes %}
+            <div>
+                <strong>Tracking no:</strong>
+                {% for delivery in order.deliveries %}
+                    {% for trackingCode in delivery.trackingCodes %}
+                        <a href="{{salesChannel.domains|first.url}}account/shipping/tracking?id={{ trackingCode }}">
+                            {{ trackingCode }}
+                        </a>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
 		{% if order.customFields.logistix_data %}
 			<div>
 				<strong>Shipping method:</strong>
@@ -45,5 +52,7 @@
 		{{ rawUrl('frontend.account.order.single.page', { 'deepLinkCode': order.deepLinkCode }, salesChannel.domains|first.url) }}
 	</div>
 
-	However, in case you have purchased without a registration or a customer account, you do not have this option.
+	<div>
+		However, in case you have purchased without a registration or a customer account, you do not have this option.
+	</div>
 </div>
